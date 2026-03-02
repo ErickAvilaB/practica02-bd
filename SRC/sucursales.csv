@@ -1,0 +1,3 @@
+id,nombre,calle,numero_interior,numero_exterior,colonia,estado,telefono,horario_atencion,tiene_clinica,nombre_clinica,clinica_numero_cuartos,clinica_numero_empleados,clinica_horario_atencion
+1,Xiao Mao Centro,Av Principal,,123,Centro,CDMX,5512345678,L-D 09:00-21:00,1,Clinica Centro,3,8,L-S 10:00-18:00
+2,Xiao Mao Norte,Calle Pinos,2,45,San Andres,CDMX,5598765432,L-V 08:00-20:00,0,,,,
