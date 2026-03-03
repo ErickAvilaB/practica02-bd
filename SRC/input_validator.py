@@ -4,18 +4,41 @@ from errors import AppError
 
 
 class InputValidator:
-    """Utilidades de captura y validacion de entradas por consola.
+    """
+    Clase utilitaria para la captura y validación de entradas por consola.
 
-    Centraliza validaciones para:
-    - Campos obligatorios y opcionales
-    - Numeros enteros (campos numericos solo aceptan numeros)
-    - Telefonos (solo digitos, aceptando espacios o guiones)
-    - Fechas (formato ISO YYYY-MM-DD)
-    - Booleanos (s/n)
+    Centraliza todas las validaciones relacionadas con datos ingresados
+    por el usuario en aplicaciones CLI (Command Line Interface).
+
+    Funcionalidades principales:
+    - Validación de campos obligatorios y opcionales.
+    - Lectura y validación de números enteros positivos.
+    - Validación de listas de teléfonos.
+    - Validación básica de correos electrónicos.
+    - Validación de fechas en formato ISO (YYYY-MM-DD).
+    - Lectura de valores booleanos (s/n).
+    - Validación de identificadores numéricos.
+    - Validación de valores monetarios decimales simples.
     """
 
     def read_text(self, prompt: str, allow_empty: bool = False, default: str | None = None) -> str:
-        """Lee texto desde consola y valida vacio segun se indique."""
+        """
+        Lee texto desde consola y valida si puede estar vacío.
+
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+            allow_empty (bool): Indica si se permite una cadena vacía.
+            default (str | None): Valor por defecto si el usuario no ingresa nada.
+
+        Returns:
+            str: Texto ingresado por el usuario o el valor por defecto.
+
+        Comportamiento:
+            - Si el usuario no ingresa nada y existe un valor por defecto,
+              se retorna el valor por defecto.
+            - Si no se permite vacío y el usuario no ingresa texto,
+              se solicita nuevamente la entrada.
+        """
         while True:
             user_input = input(prompt).strip()
 
@@ -29,7 +52,23 @@ class InputValidator:
             return user_input
 
     def read_int(self, prompt: str, allow_empty: bool = False, default: int | None = None) -> int | None:
-        """Lee un entero. Regresa None si allow_empty=True y el usuario deja vacio."""
+        """
+        Lee un número entero positivo desde consola.
+
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+            allow_empty (bool): Permite retornar None si la entrada está vacía.
+            default (int | None): Valor por defecto si no se ingresa nada.
+
+        Returns:
+            int | None:
+                - Entero convertido si la entrada es válida.
+                - None si allow_empty=True y el usuario deja vacío.
+                - default si está definido y la entrada es vacía.
+
+        Restricciones:
+            - Solo acepta dígitos (sin signos ni decimales).
+        """
         while True:
             raw_value = input(prompt).strip()
 
@@ -48,13 +87,23 @@ class InputValidator:
             return int(raw_value)
 
     def read_phone_list(self, prompt: str) -> str:
-        """Lee una lista de telefonos.
+        """
+        Lee una lista de teléfonos separados por coma.
 
-        El usuario puede escribir:
-        - Un telefono: 5512345678
-        - Varios separados por coma: 5512345678, 5587654321
+        Formato permitido:
+            - Un teléfono: 5512345678
+            - Varios teléfonos: 5512345678, 5587654321
+            - Se permiten espacios o guiones (serán eliminados).
 
-        Se guarda en CSV como una sola cadena separada por '|', por simplicidad.
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+
+        Returns:
+            str: Teléfonos normalizados y separados por '|'.
+
+        Ejemplo:
+            Entrada: "5512-345678, 55 8765 4321"
+            Salida:  "5512345678|5587654321"
         """
         while True:
             raw_value = input(prompt).strip()
@@ -82,7 +131,23 @@ class InputValidator:
             return "|".join(normalized_parts)
 
     def read_email_list(self, prompt: str) -> str:
-        """Lee correos y aplica una validacion ligera (presencia de '@')."""
+        """
+        Lee una lista de correos electrónicos separados por coma.
+
+        Validación aplicada:
+            - Debe contener '@'.
+            - No puede iniciar ni terminar con '@'.
+
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+
+        Returns:
+            str: Correos válidos separados por '|'.
+
+        Nota:
+            La validación es básica y no cumple completamente
+            con el estándar RFC de correos electrónicos.
+        """
         while True:
             raw_value = input(prompt).strip()
             if not raw_value:
@@ -98,7 +163,20 @@ class InputValidator:
             return "|".join(parts)
 
     def read_date_iso(self, prompt: str, allow_empty: bool = False, default: str | None = None) -> str:
-        """Lee una fecha en formato YYYY-MM-DD."""
+        """
+        Lee y valida una fecha en formato ISO (YYYY-MM-DD).
+
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+            allow_empty (bool): Permite retornar cadena vacía.
+            default (str | None): Valor por defecto si no se ingresa nada.
+
+        Returns:
+            str: Fecha válida en formato YYYY-MM-DD.
+
+        Validación:
+            - Usa datetime.strptime para verificar formato y fecha real.
+        """
         while True:
             raw_value = input(prompt).strip()
 
@@ -117,7 +195,18 @@ class InputValidator:
                 print("Entrada invalida: usa el formato YYYY-MM-DD (ejemplo: 2001-03-15).")
 
     def read_bool(self, prompt: str, default: bool | None = None) -> bool:
-        """Lee un booleano como 's'/'n'."""
+        """
+        Lee un valor booleano desde consola usando 's'/'n'.
+
+        Args:
+            prompt (str): Mensaje mostrado al usuario.
+            default (bool | None): Valor por defecto si no se ingresa nada.
+
+        Returns:
+            bool:
+                True si el usuario responde 's' o 'si'.
+                False si responde 'n' o 'no'.
+        """
         while True:
             raw_value = input(prompt).strip().lower()
 
@@ -132,7 +221,18 @@ class InputValidator:
             print("Entrada invalida: responde con 's' o 'n'.")
 
     def require_existing_id(self, raw_value: str) -> str:
-        """Valida que un id exista y sea numerico (como llave)."""
+        """
+        Valida que un identificador exista y sea numérico.
+
+        Args:
+            raw_value (str): Valor ingresado.
+
+        Returns:
+            str: ID validado (solo dígitos).
+
+        Raises:
+            AppError: Si el valor está vacío o no es numérico.
+        """
         value = raw_value.strip()
         if not value:
             raise AppError("Debes proporcionar un id.")
@@ -141,7 +241,23 @@ class InputValidator:
         return value
 
     def require_money(self, raw_value: str, field_name: str) -> str:
-        """Valida un valor monetario en formato decimal simple (ej. 12.50 o 12)."""
+        """
+        Valida un valor monetario en formato decimal simple.
+
+        Formatos válidos:
+            - 12
+            - 12.50
+
+        Args:
+            raw_value (str): Valor ingresado.
+            field_name (str): Nombre del campo (para mensajes de error).
+
+        Returns:
+            str: Valor validado.
+
+        Raises:
+            AppError: Si el valor está vacío o tiene formato inválido.
+        """
         value = raw_value.strip()
         if not value:
             raise AppError(f"Debes proporcionar {field_name}.")
@@ -150,6 +266,20 @@ class InputValidator:
         return value
 
     def _is_simple_decimal(self, value: str) -> bool:
+        """
+        Verifica si una cadena representa un decimal positivo simple.
+
+        Reglas:
+            - Solo dígitos (entero).
+            - O formato con un solo punto decimal (ej. 12.50).
+            - No permite signos negativos ni múltiples puntos.
+
+        Args:
+            value (str): Cadena a validar.
+
+        Returns:
+            bool: True si cumple el formato, False en caso contrario.
+        """
         if value.isdigit():
             return True
         if value.count(".") != 1:
