@@ -11,37 +11,85 @@ from cliente_service import ClienteService
 
 
 class Application:
-    """Aplicacion principal del prototipo.
+    """
+    Clase principal de la aplicación.
 
-    Requisitos del punto ii:
-    - Almacenar informacion de sucursales, medicamentos/insumos y clientes en CSV
-    - Permitir agregar, consultar, editar y eliminar (CRUD)
-    - Tener al menos un menu de interaccion
-    - Consultas por llave: recibir id y regresar todos los datos relacionados
-    - Validar campos numericos
-    - Manejo de excepciones con mensajes claros
+    Esta clase coordina todos los componentes del sistema:
+    - Configuración general
+    - Repositorios CSV
+    - Servicios de negocio
+    - Validaciones
+    - Menú de interacción
+    - Generación de datos de prueba
 
-    Adicional (alineado a requerimientos del analisis):
-    - Descuento se calcula a partir de visitas_anuales
-    - Producto incluye campo requiere_receta, util para venta en linea mas adelante
+    Cumple con los requisitos del punto ii del proyecto:
+
+    Requisitos funcionales:
+    ------------------------
+    - Almacenar información de sucursales, productos y clientes en archivos CSV.
+    - Permitir operaciones CRUD (Crear, Leer, Actualizar, Eliminar).
+    - Incluir un menú interactivo.
+    - Consultas por llave (id).
+    - Validación de campos numéricos.
+    - Manejo de excepciones con mensajes claros.
+
+    Requisitos adicionales alineados al análisis:
+    ----------------------------------------------
+    - El descuento puede calcularse a partir de visitas_anuales del cliente.
+    - El producto incluye el campo requiere_receta, útil para futura venta en línea.
     """
 
     def __init__(self) -> None:
+        """
+        Inicializa todos los componentes necesarios para la ejecución del sistema.
+
+        Flujo de inicialización:
+        1. Se carga la configuración general (rutas y headers).
+        2. Se crean los repositorios CSV.
+        3. Se crean los servicios de negocio.
+        4. Se prepara el generador de datos de prueba.
+        """
+
+        # Configuración global (rutas y encabezados)
         config = AppConfig()
+
+        # Componentes auxiliares
         validator = InputValidator()
         menu = Menu()
 
-        sucursal_repository = CsvRepository(config.sucursales_csv, config.sucursales_header)
-        producto_repository = CsvRepository(config.productos_csv, config.productos_header)
-        cliente_repository = CsvRepository(config.clientes_csv, config.clientes_header)
+        # =============================
+        # REPOSITORIOS CSV
+        # =============================
+
+        # Cada repositorio gestiona lectura y escritura sobre su archivo CSV
+        sucursal_repository = CsvRepository(
+            config.sucursales_csv,
+            config.sucursales_header
+        )
+
+        producto_repository = CsvRepository(
+            config.productos_csv,
+            config.productos_header
+        )
+
+        cliente_repository = CsvRepository(
+            config.clientes_csv,
+            config.clientes_header
+        )
+
+        # =============================
+        # COMPONENTES PRINCIPALES
+        # =============================
 
         self._validator = validator
         self._menu = menu
 
+        # Servicios de negocio (capa intermedia entre UI y repositorio)
         self._sucursal_service = SucursalService(sucursal_repository, validator)
         self._producto_service = ProductoService(producto_repository, validator)
         self._cliente_service = ClienteService(cliente_repository, validator)
 
+        # Generador de datos iniciales
         self._seed_data = SeedData(
             sucursal_repository=sucursal_repository,
             producto_repository=producto_repository,
@@ -49,7 +97,15 @@ class Application:
         )
 
     def run(self) -> None:
-        """Ejecuta el ciclo principal del programa."""
+        """
+        Ejecuta el ciclo principal del programa.
+
+        Este método:
+        - Muestra el menú principal.
+        - Redirige a los submenús correspondientes.
+        - Controla el manejo global de excepciones.
+        """
+
         print("Prototipo CSV - Una farmacia de otro mundo (Xiao Mao)")
 
         while True:
@@ -77,16 +133,39 @@ class Application:
                     print("Saliendo. Hasta luego.")
                     return
 
+            # Manejo de errores controlados de la aplicación
             except AppError as error:
                 print("\n[ERROR] " + str(error))
+
+            # Permite salir con Ctrl+C sin mostrar traceback
             except KeyboardInterrupt:
                 print("\nInterrumpido por el usuario. Saliendo.")
                 return
+
+            # Captura errores inesperados para evitar que el programa colapse
             except Exception as error:
                 print("\n[ERROR INESPERADO] " + str(error))
 
     def _entity_loop(self, title: str, service) -> None:
-        """Submenu de CRUD para una entidad."""
+        """
+        Ejecuta el submenú CRUD para una entidad específica.
+
+        Parámetros:
+        -----------
+        title : str
+            Nombre que se mostrará en el menú.
+        service :
+            Servicio que implementa la lógica de negocio
+            (SucursalService, ProductoService o ClienteService).
+
+        Funcionalidades disponibles:
+        - Listar registros
+        - Consultar por ID
+        - Agregar nuevo registro
+        - Editar registro existente
+        - Eliminar registro
+        """
+
         while True:
             option = self._menu.choose_option(
                 title,
@@ -114,9 +193,24 @@ class Application:
                 return
 
     def _populate_test_data(self) -> None:
-        """Puebla los CSV con datos de prueba (sobrescribe el contenido)."""
+        """
+        Genera y guarda datos de prueba en los archivos CSV.
+
+        Advertencia:
+        ------------
+        Esta acción sobrescribe completamente el contenido actual
+        de los archivos CSV, eliminando datos existentes.
+
+        Se solicita confirmación explícita al usuario antes de proceder.
+        """
+
         print("\nEsta accion SOBRESCRIBIRA los CSV actuales (perderas datos).")
-        confirm = self._validator.read_bool("Deseas continuar? (s/n): ", default=False)
+
+        confirm = self._validator.read_bool(
+            "Deseas continuar? (s/n): ",
+            default=False
+        )
+
         if not confirm:
             print("Operacion cancelada.")
             return
