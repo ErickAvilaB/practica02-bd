@@ -5,14 +5,25 @@ from sucursal import Sucursal
 
 
 class SeedData:
-    """Generador de datos de prueba.
+    """
+    Generador de datos iniciales (seed) para pruebas del sistema.
 
-    Crea registros minimos realistas para:
-    - Sucursales (incluyendo una con clinica)
-    - Productos (mezcla de medicamento e insumo)
-    - Clientes (con diferentes visitas anuales para probar descuentos)
+    Esta clase se encarga de poblar los repositorios CSV con
+    información mínima pero realista para facilitar:
 
-    IMPORTANTE: Sobrescribe los CSV.
+    - Pruebas funcionales
+    - Pruebas de descuentos por visitas anuales
+    - Validación de relaciones entre entidades
+    - Pruebas de productos de distintas categorías
+
+    Entidades generadas:
+    - Sucursales (incluye una con clínica activa)
+    - Productos (mezcla de medicamentos e insumos)
+    - Clientes (con diferente número de visitas anuales)
+
+    IMPORTANTE:
+    El método `generate()` sobrescribe completamente el contenido
+    actual de los archivos CSV.
     """
 
     def __init__(
@@ -21,12 +32,38 @@ class SeedData:
         producto_repository: CsvRepository,
         cliente_repository: CsvRepository,
     ) -> None:
+        """
+        Inicializa el generador de datos con los repositorios necesarios.
+
+        :param sucursal_repository: Repositorio para persistencia de sucursales.
+        :param producto_repository: Repositorio para persistencia de productos.
+        :param cliente_repository: Repositorio para persistencia de clientes.
+        """
         self._sucursal_repository = sucursal_repository
         self._producto_repository = producto_repository
         self._cliente_repository = cliente_repository
 
     def generate(self) -> None:
-        """Sobrescribe los CSV con datos de prueba."""
+        """
+        Genera y guarda datos de prueba en los repositorios.
+
+        Proceso:
+        1. Crea instancias de Sucursal.
+        2. Crea instancias de Producto.
+        3. Crea instancias de Cliente.
+        4. Convierte cada objeto a formato fila (to_row()).
+        5. Sobrescribe completamente los CSV usando replace_with().
+
+        Nota:
+        Este método elimina cualquier dato previo almacenado en los CSV.
+        """
+
+        # ---------------------------
+        # Sucursales de prueba
+        # ---------------------------
+        # Incluye:
+        # - Una sucursal con clínica activa
+        # - Una sucursal sin clínica
         sucursales = [
             Sucursal(
                 id_value=1,
@@ -62,6 +99,13 @@ class SeedData:
             ),
         ]
 
+        # ---------------------------
+        # Productos de prueba
+        # ---------------------------
+        # Incluye:
+        # - Medicamento de venta libre
+        # - Medicamento bajo receta
+        # - Insumo farmacéutico
         productos = [
             Producto(
                 id_value=1,
@@ -152,6 +196,12 @@ class SeedData:
             ),
         ]
 
+        # ---------------------------
+        # Clientes de prueba
+        # ---------------------------
+        # Incluye:
+        # - Cliente con 7 visitas (para probar descuentos altos)
+        # - Cliente con 4 visitas (nivel intermedio)
         clientes = [
             Cliente(
                 id_value=1,
@@ -187,6 +237,8 @@ class SeedData:
             ),
         ]
 
+        # Persistencia: conversión de objetos a filas CSV
+        # y sobrescritura completa de archivos.
         self._sucursal_repository.replace_with([s.to_row() for s in sucursales])
         self._producto_repository.replace_with([p.to_row() for p in productos])
         self._cliente_repository.replace_with([c.to_row() for c in clientes])
