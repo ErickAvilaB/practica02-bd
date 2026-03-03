@@ -1,11 +1,20 @@
 class Cliente:
-    """Modelo de un cliente/paciente.
+    """
+    Modelo de dominio que representa a un cliente/paciente del sistema.
 
-    Guarda:
-    - Nombre completo y datos de contacto
-    - Fecha de nacimiento y domicilio
-    - Metodo de pago
-    - Visitas anuales (para descuento automatico)
+    Esta clase encapsula:
+    - Información personal (nombre completo).
+    - Datos de contacto (teléfonos y correos).
+    - Fecha de nacimiento.
+    - Domicilio.
+    - Método de pago preferido.
+    - Número de visitas anuales (base para cálculo de descuento).
+
+    Importante:
+    ----------
+    Esta clase pertenece a la capa de dominio.
+    No realiza operaciones de entrada/salida ni interactúa directamente
+    con archivos. La persistencia se maneja a través del repositorio.
     """
 
     def __init__(
@@ -25,6 +34,41 @@ class Cliente:
         metodo_pago: str,
         visitas_anuales: int,
     ) -> None:
+        """
+        Inicializa una instancia de Cliente.
+
+        Parámetros:
+        -----------
+        id_value : int
+            Identificador único del cliente.
+        nombre : str
+            Nombre del cliente.
+        apellido_paterno : str
+            Apellido paterno.
+        apellido_materno : str
+            Apellido materno.
+        telefonos : str
+            Lista de teléfonos almacenados como cadena separada por "|".
+        correos : str
+            Lista de correos almacenados como cadena separada por "|".
+        fecha_nacimiento : str
+            Fecha en formato ISO (YYYY-MM-DD).
+        calle : str
+            Calle del domicilio.
+        numero_interior : int | None
+            Número interior (puede ser None si no aplica).
+        numero_exterior : int | None
+            Número exterior (puede ser None si no aplica).
+        colonia : str
+            Colonia del domicilio.
+        estado : str
+            Estado del domicilio.
+        metodo_pago : str
+            Método de pago preferido (EFECTIVO o TARJETA).
+        visitas_anuales : int
+            Número de visitas realizadas en un año.
+        """
+
         self.id = id_value
         self.nombre = nombre
         self.apellido_paterno = apellido_paterno
@@ -41,7 +85,22 @@ class Cliente:
         self.visitas_anuales = visitas_anuales
 
     def tasa_descuento(self) -> int:
-        """Calcula el descuento porcentual basado en visitas anuales."""
+        """
+        Calcula el porcentaje de descuento aplicable
+        según el número de visitas anuales.
+
+        Reglas de negocio:
+        ------------------
+        - Más de 6 visitas → 25%
+        - Entre 4 y 6 visitas → 10%
+        - Entre 2 y 3 visitas → 5%
+        - Menos de 2 visitas → 0%
+
+        Regresa:
+        --------
+        int
+            Porcentaje de descuento aplicable.
+        """
         if self.visitas_anuales > 6:
             return 25
         if self.visitas_anuales >= 4:
@@ -51,7 +110,18 @@ class Cliente:
         return 0
 
     def to_row(self) -> dict[str, str]:
-        """Convierte el objeto a una fila CSV."""
+        """
+        Convierte la instancia Cliente en un diccionario
+        compatible con una fila CSV.
+
+        Todas las claves y valores se transforman en str,
+        ya que el formato CSV almacena datos como texto.
+
+        Retorna:
+        --------
+        dict[str, str]
+            Representación serializable del cliente.
+        """
         return {
             "id": str(self.id),
             "nombre": self.nombre,
@@ -71,8 +141,30 @@ class Cliente:
 
     @staticmethod
     def from_row(row: dict[str, str]) -> "Cliente":
-        """Crea un Cliente a partir de una fila CSV."""
+        """
+        Crea una instancia de Cliente a partir de una fila CSV.
+
+        Convierte automáticamente:
+        - id → int
+        - numero_interior y numero_exterior → int | None
+        - visitas_anuales → int (default 0 si es inválido)
+
+        Parámetros:
+        -----------
+        row : dict[str, str]
+            Diccionario proveniente del repositorio CSV.
+
+        Retorna:
+        --------
+        Cliente
+            Instancia completamente construida.
+        """
+
         def parse_int(value: str) -> int | None:
+            """
+            Convierte una cadena a entero si es numérica.
+            Retorna None si está vacía o no es válida.
+            """
             value = (value or "").strip()
             return int(value) if value.isdigit() else None
 
