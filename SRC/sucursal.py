@@ -1,9 +1,29 @@
 class Sucursal:
-    """Modelo de una sucursal.
+    """
+    Modelo de dominio que representa una sucursal del sistema.
 
-    Guarda:
-    - Datos generales: nombre, direccion, telefono, horario
-    - Datos opcionales de clinica integrada
+    Una sucursal puede:
+    - Operar únicamente como punto de venta.
+    - Tener integrada una clínica con información adicional.
+
+    Contiene dos grupos de datos:
+
+    1) Datos generales:
+       - Identificador único
+       - Nombre
+       - Dirección (calle, números, colonia, estado)
+       - Teléfono
+       - Horario de atención
+
+    2) Datos opcionales de clínica:
+       - Indicador de si existe clínica
+       - Nombre de la clínica
+       - Número de cuartos
+       - Número de empleados
+       - Horario de atención de la clínica
+
+    Este modelo es una entidad de dominio y es independiente
+    del mecanismo de persistencia.
     """
 
     def __init__(
@@ -23,6 +43,24 @@ class Sucursal:
         clinica_numero_empleados: int | None,
         clinica_horario_atencion: str,
     ) -> None:
+        """
+        Inicializa una nueva instancia de Sucursal.
+
+        :param id_value: Identificador único de la sucursal.
+        :param nombre: Nombre comercial de la sucursal.
+        :param calle: Calle del domicilio.
+        :param numero_interior: Número interior (opcional).
+        :param numero_exterior: Número exterior (opcional).
+        :param colonia: Colonia o barrio.
+        :param estado: Estado o entidad federativa.
+        :param telefono: Número telefónico de contacto.
+        :param horario_atencion: Horario general de atención.
+        :param tiene_clinica: Indica si la sucursal cuenta con clínica integrada.
+        :param nombre_clinica: Nombre de la clínica (si aplica).
+        :param clinica_numero_cuartos: Número de cuartos disponibles en la clínica.
+        :param clinica_numero_empleados: Número de empleados de la clínica.
+        :param clinica_horario_atencion: Horario de atención específico de la clínica.
+        """
         self.id = id_value
         self.nombre = nombre
         self.calle = calle
@@ -39,7 +77,19 @@ class Sucursal:
         self.clinica_horario_atencion = clinica_horario_atencion
 
     def to_row(self) -> dict[str, str]:
-        """Convierte el objeto a una fila para CSV."""
+        """
+        Convierte la instancia de Sucursal a un diccionario
+        listo para ser almacenado en un archivo CSV.
+
+        Reglas de conversión:
+        - Los valores numéricos se convierten a cadena.
+        - Los valores None se representan como cadena vacía.
+        - El booleano 'tiene_clinica' se almacena como:
+            "1" -> True
+            "0" -> False
+
+        :return: Diccionario con claves tipo string y valores tipo string.
+        """
         return {
             "id": str(self.id),
             "nombre": self.nombre,
@@ -59,8 +109,28 @@ class Sucursal:
 
     @staticmethod
     def from_row(row: dict[str, str]) -> "Sucursal":
-        """Crea una Sucursal a partir de una fila CSV."""
+        """
+        Crea una instancia de Sucursal a partir de un diccionario
+        proveniente de una fila de un archivo CSV.
+
+        Reglas de conversión:
+        - Cadenas vacías se convierten a None en campos numéricos.
+        - El valor "1" en 'tiene_clinica' se interpreta como True.
+        - Cualquier otro valor se interpreta como False.
+        - Los textos se normalizan eliminando espacios laterales.
+
+        :param row: Diccionario con los datos leídos del CSV.
+        :return: Instancia de Sucursal.
+        """
+
         def parse_int(value: str) -> int | None:
+            """
+            Convierte una cadena a entero si contiene únicamente dígitos.
+            En caso contrario, devuelve None.
+
+            :param value: Cadena a convertir.
+            :return: Entero o None.
+            """
             value = (value or "").strip()
             return int(value) if value.isdigit() else None
 
